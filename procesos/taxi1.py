@@ -42,7 +42,7 @@ def mover_taxi(id_taxi, grid_size, velocidad, max_servicios):
 
         # Mover el taxi
         x, y = mover_taxi_en_grilla(x, y, grid_size, velocidad)
-        time.sleep(5)  # Cambiar a 15 segundos para 30 minutos simulados
+        time.sleep(2)  # Cambiar a 15 segundos para 30 minutos simulados
 
     pub_socket.close()
     rep_socket.close()

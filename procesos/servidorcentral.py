@@ -3,6 +3,9 @@ import time
 import random
 import threading
 
+# Diccionario que almacena el estado de las solicitudes de usuarios: {usuario_id: tiempo_solicitud}
+solicitudes_usuarios = {}
+
 def sincronizar_estado(replica_socket, taxis, solicitudes):
     while True:
         estado = {
@@ -11,6 +14,16 @@ def sincronizar_estado(replica_socket, taxis, solicitudes):
         }
         replica_socket.send_pyobj(estado)  # Enviar el estado como objeto Python serializado
         time.sleep(5)  # Sincronizar cada 5 segundos
+
+# Verificar si el usuario aún está esperando respuesta
+def user_is_still_waiting(id_usuario, tiempo_espera_maximo=10):
+    tiempo_actual = time.time()
+    if id_usuario in solicitudes_usuarios:
+        tiempo_solicitud = solicitudes_usuarios[id_usuario]
+        if tiempo_actual - tiempo_solicitud > tiempo_espera_maximo:
+            print(f"Tiempo de espera excedido para el usuario {id_usuario}.")
+            return False
+    return True
 
 def servidor():
     context = zmq.Context()
@@ -55,25 +68,30 @@ def servidor():
         if user_rep_socket.poll(1000):  # Tiempo de espera para solicitudes de usuario
             solicitud = user_rep_socket.recv_string()
             print(f"Solicitud recibida: {solicitud}")
-            solicitudes.append(solicitud)  # Añadir la solicitud a la lista
-
+            
+            id_usuario = solicitud.split()[1]
+            solicitudes_usuarios[id_usuario] = time.time()  # Almacenar el tiempo en que la solicitud se hizo
+            
             # Verificar si hay taxis disponibles
             if len(taxis) > 0:
-                time.sleep(1)  # Espera de 1 segundo para asegurar la sincronización
+                if user_is_still_waiting(id_usuario):
+                    taxi_seleccionado = seleccionar_taxi(taxis)
+                    print(f"Asignando servicio al taxi {taxi_seleccionado}")
 
-                # Seleccionar cualquier taxi disponible
-                taxi_seleccionado = seleccionar_taxi(taxis)
-                print(f"Asignando servicio al taxi {taxi_seleccionado}")
+                    # Conectar al taxi seleccionado
+                    taxi_req_socket.connect(f"tcp://localhost:556{taxi_seleccionado}")
+                    taxi_req_socket.send_string("Servicio asignado")
+                    respuesta = taxi_req_socket.recv_string()
+                    print(f"Respuesta del taxi {taxi_seleccionado}: {respuesta}")
+                    taxi_req_socket.disconnect(f"tcp://localhost:556{taxi_seleccionado}")  # Desconectar después del uso
 
-                # Conectar al taxi seleccionado
-                taxi_req_socket.connect(f"tcp://localhost:556{taxi_seleccionado}")
-                taxi_req_socket.send_string("Servicio asignado")
-                respuesta = taxi_req_socket.recv_string()
-                print(f"Respuesta del taxi {taxi_seleccionado}: {respuesta}")
-                taxi_req_socket.disconnect(f"tcp://localhost:556{taxi_seleccionado}")  # Desconectar después del uso
+                    # Enviar la confirmación al usuario
+                    user_rep_socket.send_string(f"Taxi {taxi_seleccionado} asignado")
+                else:
+                    print(f"Usuario {id_usuario} ya no está esperando, eliminando la solicitud.")
+                    if id_usuario in solicitudes_usuarios:
+                        del solicitudes_usuarios[id_usuario]
 
-                # Enviar la confirmación al usuario
-                user_rep_socket.send_string(f"Taxi {taxi_seleccionado} asignado")
             else:
                 print("No hay taxis disponibles")
                 user_rep_socket.send_string("No hay taxis disponibles, intente más tarde")
