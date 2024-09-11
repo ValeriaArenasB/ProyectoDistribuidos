@@ -1,6 +1,16 @@
 import zmq
 import time
 import random
+import threading
+
+def sincronizar_estado(replica_socket, taxis, solicitudes):
+    while True:
+        estado = {
+            'taxis': taxis,
+            'solicitudes': solicitudes
+        }
+        replica_socket.send_pyobj(estado)  # Enviar el estado como objeto Python serializado
+        time.sleep(5)  # Sincronizar cada 5 segundos
 
 def servidor():
     context = zmq.Context()
@@ -17,7 +27,19 @@ def servidor():
     # REQ para enviar servicios a los taxis
     taxi_req_socket = context.socket(zmq.REQ)  # Socket de solicitud para taxis
 
+    # REP para el ping/pong health-check
+    ping_rep_socket = context.socket(zmq.REP)
+    ping_rep_socket.bind(f"tcp://*:5558")  # El puerto donde el servidor responde pings
+
+    # Socket para sincronizar el estado con la réplica
+    replica_socket = context.socket(zmq.PUSH)
+    replica_socket.connect("tcp://localhost:5559")  # La réplica escucha en este puerto
+
     taxis = {}
+    solicitudes = []
+
+    # Lanzar hilo de sincronización de estado
+    threading.Thread(target=sincronizar_estado, args=(replica_socket, taxis, solicitudes)).start()
 
     while True:
         # Recibir posiciones de taxis
@@ -33,6 +55,7 @@ def servidor():
         if user_rep_socket.poll(1000):  # Tiempo de espera para solicitudes de usuario
             solicitud = user_rep_socket.recv_string()
             print(f"Solicitud recibida: {solicitud}")
+            solicitudes.append(solicitud)  # Añadir la solicitud a la lista
 
             # Verificar si hay taxis disponibles
             if len(taxis) > 0:
@@ -54,6 +77,13 @@ def servidor():
             else:
                 print("No hay taxis disponibles")
                 user_rep_socket.send_string("No hay taxis disponibles, intente más tarde")
+
+        # Manejar el health-check (ping/pong)
+        if ping_rep_socket.poll(1000):  # Verifica si se recibe un ping
+            ping_message = ping_rep_socket.recv_string()
+            if ping_message == "ping":
+                print("Recibido ping, respondiendo con pong")
+                ping_rep_socket.send_string("pong")
 
         time.sleep(1)
 
