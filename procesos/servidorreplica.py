@@ -1,3 +1,5 @@
+#esto es puro chat, casi no pude entonces me toco pegarlo asi. toca revisar mas casos
+
 import zmq
 import threading
 import time

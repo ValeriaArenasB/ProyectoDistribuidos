@@ -10,6 +10,9 @@ def usuario(id_usuario, grid_size):
     req_socket = context.socket(zmq.REQ)
     req_socket.connect("tcp://localhost:5556")  # El servidor debe bindear en este puerto
 
+    # Establecer timeout para esperar respuesta del servidor
+    req_socket.setsockopt(zmq.RCVTIMEO, 7000)  # Timeout de 7 segundos. 
+
     # Posición aleatoria del usuario
     x, y = random.randint(0, grid_size[0] - 1), random.randint(0, grid_size[1] - 1)
     
@@ -23,8 +26,11 @@ def usuario(id_usuario, grid_size):
     print(f"Usuario {id_usuario} ha solicitado un taxi.")
 
     # Esperar respuesta del servidor
-    respuesta = req_socket.recv_string()
-    print(f"Usuario {id_usuario} recibió respuesta: {respuesta}")
+    try:
+        respuesta = req_socket.recv_string()
+        print(f"Usuario {id_usuario} recibió respuesta: {respuesta}")
+    except zmq.error.Again:
+        print(f"Usuario {id_usuario} no recibió respuesta, simulando que busca otro proveedor.")
 
     req_socket.close()
 
