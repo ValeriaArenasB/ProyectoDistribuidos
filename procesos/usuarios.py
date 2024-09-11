@@ -1,46 +1,49 @@
 import zmq
-import threading
-import random
 import time
+import random
+import threading
 
-def usuario(id_usuario, grid_size):
+def usuario(id_usuario, x, y, tiempo_espera):
     context = zmq.Context()
 
     # REQ para solicitar un taxi
     req_socket = context.socket(zmq.REQ)
     req_socket.connect("tcp://localhost:5556")  # El servidor debe bindear en este puerto
 
-    # Establecer timeout para esperar respuesta del servidor
-    req_socket.setsockopt(zmq.RCVTIMEO, 7000)  # Timeout de 7 segundos. 
-
-    # Posición aleatoria del usuario
-    x, y = random.randint(0, grid_size[0] - 1), random.randint(0, grid_size[1] - 1)
-    
     # Simular tiempo hasta necesitar un taxi
-    tiempo_espera = random.randint(1, 5)  # En segundos para la prueba
-    print(f"Usuario {id_usuario} esperando {tiempo_espera} segundos para solicitar un taxi.")
+    print(f"Usuario {id_usuario} en posición ({x},{y}) esperando {tiempo_espera} segundos para solicitar un taxi.")
     time.sleep(tiempo_espera)
 
     # Enviar solicitud de taxi
     req_socket.send_string(f"Usuario {id_usuario} en posición ({x},{y}) solicita un taxi")
     print(f"Usuario {id_usuario} ha solicitado un taxi.")
 
-    # Esperar respuesta del servidor
+    # Medir el tiempo de respuesta
+    inicio_respuesta = time.time()
+
     try:
+        # Esperar respuesta del servidor con timeout de 10 segundos
+        req_socket.setsockopt(zmq.RCVTIMEO, 10000)  # 10 segundos de timeout
         respuesta = req_socket.recv_string()
-        print(f"Usuario {id_usuario} recibió respuesta: {respuesta}")
+        fin_respuesta = time.time()
+
+        tiempo_respuesta = fin_respuesta - inicio_respuesta
+        print(f"Usuario {id_usuario} recibió respuesta: {respuesta} en {tiempo_respuesta:.2f} segundos")
     except zmq.error.Again:
-        print(f"Usuario {id_usuario} no recibió respuesta, simulando que busca otro proveedor.")
+        print(f"Usuario {id_usuario} no recibió respuesta, se va a otro proveedor")
 
     req_socket.close()
 
 def generador_usuarios(num_usuarios, grid_size):
     threads = []
     for i in range(num_usuarios):
-        hilo_usuario = threading.Thread(target=usuario, args=(i, grid_size))
+        # Generar posiciones aleatorias para los usuarios
+        x, y = random.randint(0, grid_size[0] - 1), random.randint(0, grid_size[1] - 1)
+        tiempo_espera = random.randint(1, 5)  # Tiempo en segundos para simular minutos
+        hilo_usuario = threading.Thread(target=usuario, args=(i, x, y, tiempo_espera))
         threads.append(hilo_usuario)
         hilo_usuario.start()
-    
+
     # Esperar a que todos los hilos terminen
     for thread in threads:
         thread.join()
