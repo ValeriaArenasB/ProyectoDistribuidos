@@ -3,27 +3,24 @@ import time
 import random
 import threading
 
-# Diccionario que almacena el estado de las solicitudes de usuarios: {usuario_id: tiempo_solicitud}
-solicitudes_usuarios = {}
-
-def sincronizar_estado(replica_socket, taxis, solicitudes):
+def sincronizar_estado(replica_socket, taxis, solicitudes, taxis_activos):
     while True:
         estado = {
             'taxis': taxis,
-            'solicitudes': solicitudes
+            'solicitudes': solicitudes,
+            'taxis_activos': taxis_activos  # Incluyendo taxis activos
         }
         replica_socket.send_pyobj(estado)  # Enviar el estado como objeto Python serializado
-        time.sleep(5)  # Sincronizar cada 5 segundos
+        time.sleep(3)  # Sincronizar cada 3 segundos
 
-# Verificar si el usuario aún está esperando respuesta
-def user_is_still_waiting(id_usuario, tiempo_espera_maximo=10):
-    tiempo_actual = time.time()
-    if id_usuario in solicitudes_usuarios:
-        tiempo_solicitud = solicitudes_usuarios[id_usuario]
-        if tiempo_actual - tiempo_solicitud > tiempo_espera_maximo:
-            print(f"Tiempo de espera excedido para el usuario {id_usuario}.")
-            return False
-    return True
+# Función para verificar si el usuario sigue esperando
+def user_is_still_waiting(solicitud):
+    user_id = solicitud.split()[1]  # Extraer el ID del usuario de la solicitud
+    current_time = time.time()
+
+    if user_id in solicitudes_timeout and current_time > solicitudes_timeout[user_id]:
+        return False  # El usuario ya no está esperando
+    return True  # El usuario aún está esperando
 
 def servidor():
     context = zmq.Context()
@@ -50,9 +47,12 @@ def servidor():
 
     taxis = {}
     solicitudes = []
+    taxis_activos = {}  # Diccionario para gestionar el estado de taxis activos
+    global solicitudes_timeout
+    solicitudes_timeout = {}  # Diccionario para registrar el timeout de cada solicitud
 
-    # Lanzar hilo de sincronización de estado
-    threading.Thread(target=sincronizar_estado, args=(replica_socket, taxis, solicitudes)).start()
+    # Lanzar hilo de sincronización de estado con taxis_activos
+    threading.Thread(target=sincronizar_estado, args=(replica_socket, taxis, solicitudes, taxis_activos)).start()
 
     while True:
         # Recibir posiciones de taxis
@@ -63,35 +63,40 @@ def servidor():
             id_taxi = int(partes[1])
             posicion = partes[-1]
             taxis[id_taxi] = posicion
+            taxis_activos[id_taxi] = True  # Marcar el taxi como activo
 
         # Recibir solicitudes de usuarios
         if user_rep_socket.poll(1000):  # Tiempo de espera para solicitudes de usuario
             solicitud = user_rep_socket.recv_string()
             print(f"Solicitud recibida: {solicitud}")
-            
-            id_usuario = solicitud.split()[1]
-            solicitudes_usuarios[id_usuario] = time.time()  # Almacenar el tiempo en que la solicitud se hizo
-            
+            solicitudes.append(solicitud)  # Añadir la solicitud a la lista
+
+            # Registrar el tiempo en que expira el timeout para esta solicitud
+            user_id = solicitud.split()[1]
+            solicitudes_timeout[user_id] = time.time() + 15  # Timeout de 15 segundos para cada solicitud
+
             # Verificar si hay taxis disponibles
             if len(taxis) > 0:
-                if user_is_still_waiting(id_usuario):
+                if user_is_still_waiting(solicitud):
                     taxi_seleccionado = seleccionar_taxi(taxis)
                     print(f"Asignando servicio al taxi {taxi_seleccionado}")
-
-                    # Conectar al taxi seleccionado
                     taxi_req_socket.connect(f"tcp://localhost:556{taxi_seleccionado}")
                     taxi_req_socket.send_string("Servicio asignado")
                     respuesta = taxi_req_socket.recv_string()
                     print(f"Respuesta del taxi {taxi_seleccionado}: {respuesta}")
-                    taxi_req_socket.disconnect(f"tcp://localhost:556{taxi_seleccionado}")  # Desconectar después del uso
+                    taxi_req_socket.disconnect(f"tcp://localhost:556{taxi_seleccionado}")
+
+                    # Eliminar la solicitud después de asignarla
+                    solicitudes.remove(solicitud)  # Asegúrate de que sea "solicitud", no "solicitud_actual"
 
                     # Enviar la confirmación al usuario
                     user_rep_socket.send_string(f"Taxi {taxi_seleccionado} asignado")
-                else:
-                    print(f"Usuario {id_usuario} ya no está esperando, eliminando la solicitud.")
-                    if id_usuario in solicitudes_usuarios:
-                        del solicitudes_usuarios[id_usuario]
 
+
+                else:
+                    print(f"Usuario ya no está esperando, eliminando la solicitud.")
+                    solicitudes.remove(solicitud)
+                    user_rep_socket.send_string("Usuario ya no está esperando.")
             else:
                 print("No hay taxis disponibles")
                 user_rep_socket.send_string("No hay taxis disponibles, intente más tarde")

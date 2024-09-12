@@ -63,7 +63,7 @@ def generador_usuarios(num_usuarios, grid_size):
         thread.join()
 
 if __name__ == "__main__":
-    num_usuarios = 5  # Número de usuarios a simular
+    num_usuarios = 3  # Número de usuarios a simular
     grid_size = (10, 10)  # Tamaño de la cuadrícula NxM
     generador_usuarios(num_usuarios, grid_size)
 
