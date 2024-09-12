@@ -2,6 +2,48 @@ import zmq
 import threading
 import time
 import random
+import json
+import os
+
+# Archivo JSON donde guardaremos los datos
+ARCHIVO_DATOS = "datos_taxis.json"
+
+# Función para cargar los datos actuales desde el archivo JSON
+def cargar_datos():
+    if os.path.exists(ARCHIVO_DATOS):
+        with open(ARCHIVO_DATOS, 'r') as archivo:
+            return json.load(archivo)
+    else:
+        return {"taxis": {}, "servicios_exitosos": 0, "servicios_fallidos": 0}
+
+# Función para guardar los datos en el archivo JSON
+def guardar_datos(datos):
+    with open(ARCHIVO_DATOS, 'w') as archivo:
+        json.dump(datos, archivo, indent=4)
+
+# Función para registrar el estado de un taxi
+def registrar_taxi(taxi_id, posicion):
+    datos = cargar_datos()
+    if taxi_id not in datos['taxis']:
+        datos['taxis'][taxi_id] = {
+            "posiciones": [],
+            "servicios_realizados": 0
+        }
+    datos['taxis'][taxi_id]["posiciones"].append(posicion)
+    guardar_datos(datos)
+
+# Función para registrar un servicio exitoso
+def registrar_servicio_exitoso(taxi_id, posicion_usuario):
+    datos = cargar_datos()
+    datos['taxis'][taxi_id]["servicios_realizados"] += 1
+    datos['servicios_exitosos'] += 1
+    guardar_datos(datos)
+
+# Función para registrar un servicio fallido
+def registrar_servicio_fallido():
+    datos = cargar_datos()
+    datos['servicios_fallidos'] += 1
+    guardar_datos(datos)
 
 # Almacenar el estado recibido desde el servidor principal
 estado_recibido = {
@@ -58,6 +100,9 @@ def servidor_replica():
                         print(f"Asignando servicio al taxi {taxi_seleccionado} para el usuario {id_usuario}")
                         asignar_servicio_taxi(taxi_seleccionado, id_usuario)
                         solicitudes_resueltas.append(solicitud)  # Marcar como resuelta
+
+                        # Registrar el servicio en el archivo JSON
+                        registrar_servicio_exitoso(taxi_seleccionado, solicitud)
                     else:
                         print(f"No hay taxis activos disponibles. Reagendando solicitud.")
                 else:
@@ -73,6 +118,9 @@ def servidor_replica():
             posicion = partes[-1]
             taxis[id_taxi] = posicion
             taxis_activos[id_taxi] = True
+
+            # Registrar la posición del taxi en el archivo JSON
+            registrar_taxi(id_taxi, posicion)
 
         # Recibir nuevas solicitudes de usuarios
         if user_rep_socket.poll(1000):
