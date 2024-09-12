@@ -2,9 +2,48 @@ import zmq
 import time
 import random
 import threading
+import json
+import os
 
-# Almacenar las solicitudes resueltas
-solicitudes_resueltas = []
+# Archivo JSON donde guardaremos los datos
+ARCHIVO_DATOS = "datos_taxis.json"
+
+# Función para cargar los datos actuales desde el archivo JSON
+def cargar_datos():
+    if os.path.exists(ARCHIVO_DATOS):
+        with open(ARCHIVO_DATOS, 'r') as archivo:
+            return json.load(archivo)
+    else:
+        return {"taxis": {}, "servicios_exitosos": 0, "servicios_fallidos": 0}
+
+# Función para guardar los datos en el archivo JSON
+def guardar_datos(datos):
+    with open(ARCHIVO_DATOS, 'w') as archivo:
+        json.dump(datos, archivo, indent=4)
+
+# Función para registrar el estado de un taxi
+def registrar_taxi(taxi_id, posicion):
+    datos = cargar_datos()
+    if taxi_id not in datos['taxis']:
+        datos['taxis'][taxi_id] = {
+            "posiciones": [],
+            "servicios_realizados": 0
+        }
+    datos['taxis'][taxi_id]["posiciones"].append(posicion)
+    guardar_datos(datos)
+
+# Función para registrar un servicio exitoso
+def registrar_servicio_exitoso(taxi_id, posicion_usuario):
+    datos = cargar_datos()
+    datos['taxis'][taxi_id]["servicios_realizados"] += 1
+    datos['servicios_exitosos'] += 1
+    guardar_datos(datos)
+
+# Función para registrar un servicio fallido
+def registrar_servicio_fallido():
+    datos = cargar_datos()
+    datos['servicios_fallidos'] += 1
+    guardar_datos(datos)
 
 def sincronizar_estado(replica_socket, taxis, solicitudes, taxis_activos, solicitudes_resueltas):
     while True:
@@ -17,7 +56,6 @@ def sincronizar_estado(replica_socket, taxis, solicitudes, taxis_activos, solici
         replica_socket.send_pyobj(estado)  # Enviar el estado como objeto Python serializado
         time.sleep(3)  # Sincronizar cada 3 segundos
 
-
 def user_is_still_waiting(solicitud, solicitudes_timeout):
     user_id = solicitud.split()[1]  # Extraer el ID del usuario de la solicitud
     current_time = time.time()
@@ -25,7 +63,6 @@ def user_is_still_waiting(solicitud, solicitudes_timeout):
     if user_id in solicitudes_timeout and current_time > solicitudes_timeout[user_id]:
         return False  # El usuario ya no está esperando
     return True  # El usuario aún está esperando
-
 
 def servidor():
     context = zmq.Context()
@@ -53,7 +90,7 @@ def servidor():
     taxis = {}
     solicitudes = []
     taxis_activos = {}  # Diccionario para gestionar el estado de taxis activos
-    global solicitudes_timeout
+    solicitudes_resueltas = []  # Solicitudes ya resueltas
     solicitudes_timeout = {}  # Diccionario para registrar el timeout de cada solicitud
 
     # Lanzar hilo de sincronización de estado con taxis_activos y solicitudes_resueltas
@@ -69,6 +106,9 @@ def servidor():
             posicion = partes[-1]
             taxis[id_taxi] = posicion
             taxis_activos[id_taxi] = True  # Marcar el taxi como activo
+
+            # Registrar la posición del taxi
+            registrar_taxi(id_taxi, posicion)
 
         # Recibir solicitudes de usuarios
         if user_rep_socket.poll(1000):  # Tiempo de espera para solicitudes de usuario
@@ -99,6 +139,9 @@ def servidor():
                     solicitudes.remove(solicitud)
                     solicitudes_resueltas.append(solicitud)  # Marcar la solicitud como resuelta
 
+                    # Registrar servicio exitoso
+                    registrar_servicio_exitoso(taxi_seleccionado, solicitud)
+
                     # Enviar la confirmación al usuario
                     user_rep_socket.send_string(f"Taxi {taxi_seleccionado} asignado")
                 else:
@@ -108,6 +151,9 @@ def servidor():
             else:
                 print("No hay taxis disponibles")
                 user_rep_socket.send_string("No hay taxis disponibles, intente más tarde")
+
+                # Registrar servicio fallido
+                registrar_servicio_fallido()
 
         # Manejar el health-check (ping/pong)
         if ping_rep_socket.poll(1000):  # Verifica si se recibe un ping
