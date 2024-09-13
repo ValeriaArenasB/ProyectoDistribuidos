@@ -66,5 +66,3 @@ if __name__ == "__main__":
     num_usuarios = 3  # Número de usuarios a simular
     grid_size = (10, 10)  # Tamaño de la cuadrícula NxM
     generador_usuarios(num_usuarios, grid_size)
-
-
