@@ -34,7 +34,7 @@ def servidor_replica():
 
     context = zmq.Context()
     user_rep_socket = context.socket(zmq.REP)
-    user_rep_socket.bind(f"tcp://*:5556")  # Escuchar nuevas solicitudes de usuarios
+    user_rep_socket.bind(f"tcp://*:5557")  # Escuchar nuevas solicitudes de usuarios
 
     sub_socket = context.socket(zmq.SUB)
     sub_socket.bind(f"tcp://*:5555")

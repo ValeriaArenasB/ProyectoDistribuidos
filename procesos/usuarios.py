@@ -6,24 +6,12 @@ import threading
 # Diccionario para almacenar el estado de los usuarios (si siguen activos o no)
 usuarios_activos = {}
 
-def usuario(id_usuario, x, y, tiempo_espera):
-    context = zmq.Context()
-
-    # REQ para solicitar un taxi
-    req_socket = context.socket(zmq.REQ)
-    req_socket.connect("tcp://localhost:5556")  # El servidor debe bindear en este puerto
-
-    # Simular tiempo hasta necesitar un taxi
-    print(f"Usuario {id_usuario} en posición ({x},{y}) esperando {tiempo_espera} segundos para solicitar un taxi.")
-    time.sleep(tiempo_espera)
-
+# Función para manejar la solicitud de taxi
+def solicitar_taxi(req_socket, id_usuario, x, y):
     # Enviar solicitud de taxi
     req_socket.send_string(f"Usuario {id_usuario} en posición ({x},{y}) solicita un taxi")
     print(f"Usuario {id_usuario} ha solicitado un taxi.")
     
-    # Marcamos al usuario como activo (esperando por un taxi)
-    usuarios_activos[id_usuario] = True
-
     # Medir el tiempo de respuesta
     inicio_respuesta = time.time()
 
@@ -43,11 +31,44 @@ def usuario(id_usuario, x, y, tiempo_espera):
         # Si no se recibe respuesta a tiempo, el usuario se va a otro proveedor
         print(f"Usuario {id_usuario} no recibió respuesta, se va a otro proveedor")
         usuarios_activos[id_usuario] = False  # Marca al usuario como inactivo (timeout)
+        return False  # Indicar que no se recibió respuesta
 
-    req_socket.close()
+    return True  # Indicar que se recibió respuesta correctamente
 
 
-# esto genera 5 usuarios con atributos al azar. no se si toque especificar cuales usuarios mas adelante
+def usuario(id_usuario, x, y, tiempo_espera):
+    context = zmq.Context()
+
+    # Intentar primero con el servidor central
+    servidores = [("tcp://localhost:5556", "Servidor Central"), ("tcp://localhost:5557", "Servidor Réplica")]
+    
+    # Simular tiempo hasta necesitar un taxi
+    print(f"Usuario {id_usuario} en posición ({x},{y}) esperando {tiempo_espera} segundos para solicitar un taxi.")
+    time.sleep(tiempo_espera)
+
+    # Marcamos al usuario como activo (esperando por un taxi)
+    usuarios_activos[id_usuario] = True
+
+    # Probar con ambos servidores (central y réplica)
+    for direccion_servidor, nombre_servidor in servidores:
+        req_socket = context.socket(zmq.REQ)
+        req_socket.connect(direccion_servidor)  # Conectar al servidor
+
+        print(f"Usuario {id_usuario} intentando conectarse a {nombre_servidor} ({direccion_servidor})...")
+        
+        if solicitar_taxi(req_socket, id_usuario, x, y):
+            # Si la solicitud fue exitosa, cerrar socket y salir
+            req_socket.close()
+            return
+        else:
+            print(f"Fallo en {nombre_servidor}, intentando con otro servidor...")
+
+        req_socket.close()
+
+    print(f"Usuario {id_usuario} no pudo conectarse a ningún servidor.")
+
+
+# Genera múltiples usuarios con atributos aleatorios
 def generador_usuarios(num_usuarios, grid_size):
     threads = []
     for i in range(num_usuarios):
