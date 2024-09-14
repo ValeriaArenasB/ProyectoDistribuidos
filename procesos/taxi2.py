@@ -1,6 +1,8 @@
 import zmq
 import time
 import random
+import json  
+
 
 def mover_taxi(id_taxi, grid_size, velocidad, max_servicios):
     context = zmq.Context()
@@ -18,10 +20,13 @@ def mover_taxi(id_taxi, grid_size, velocidad, max_servicios):
     servicios_realizados = 0
 
     while servicios_realizados < max_servicios:
-        mensaje = f"Taxi {id_taxi} en posición ({x},{y})"
-        pub_socket.send_string(mensaje)
-        print(f"Enviado: {mensaje}")
+        # Enviar la posición actual en formato JSON
+        taxi_posicion = {"x": x, "y": y}
+        mensaje = json.dumps(taxi_posicion)
+        pub_socket.send_string(f"Taxi {id_taxi} {mensaje}")
+        print(f"Enviado: Taxi {id_taxi} {mensaje}")
 
+        # Esperar un servicio con poll
         poller = zmq.Poller()
         poller.register(rep_socket, zmq.POLLIN)
         socks = dict(poller.poll(1000))  # Esperar hasta 1 segundo
