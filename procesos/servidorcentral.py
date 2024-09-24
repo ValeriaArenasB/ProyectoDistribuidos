@@ -4,7 +4,6 @@ import random
 import threading
 import json
 
-# Almacenar las solicitudes resueltas
 solicitudes_resueltas = []
 
 def cargar_datos_archivo(json_file):
@@ -36,7 +35,7 @@ def user_is_still_waiting(solicitud, solicitudes_timeout):
 
     if user_id in solicitudes_timeout and current_time > solicitudes_timeout[user_id]:
         return False  # El usuario ya no está esperando
-    return True  # El usuario aún está esperando
+    return True  # El usuario sigue esperando
 
 def registrar_servicio(data, taxi_id, usuario_posicion, taxi_posicion, servicio_satisfactorio=True):
     data["servicios"].append({
@@ -75,7 +74,7 @@ def servidor():
 
     taxis = {}
     solicitudes = []
-    taxis_activos = {}  # Diccionario para gestionar el estado de taxis activos
+    taxis_activos = {}  # Diccionario para gestionar el estado de taxis (si estan activos)
     global solicitudes_timeout
     solicitudes_timeout = {}  # Diccionario para registrar el timeout de cada solicitud
 
@@ -83,7 +82,7 @@ def servidor():
     json_file = 'datos_taxis.json'
     data = cargar_datos_archivo(json_file)
 
-    # Lanzar hilo de sincronización de estado con taxis_activos y solicitudes_resueltas
+    # Lanzar hilo de sincronización con taxis_activos y solicitudes_resueltas
     threading.Thread(target=sincronizar_estado, args=(replica_socket, taxis, solicitudes, taxis_activos, solicitudes_resueltas), daemon=True).start()
 
     while True:
@@ -98,9 +97,9 @@ def servidor():
                 try:
                     taxi_posicion = json.loads(posicion)  # Convertir la cadena JSON a diccionario
                     taxis[id_taxi] = taxi_posicion
-                    taxis_activos[id_taxi] = True  # Marcar el taxi como activo
+                    taxis_activos[id_taxi] = True 
 
-                    # Actualizar la posición del taxi en el archivo JSON
+                    # Actualizar la posición del taxi en el archivo JSON con el formato establecido
                     taxi_data = next((t for t in data["taxis"] if t["id"] == id_taxi), None)
                     if taxi_data:
                         taxi_data["posiciones"].append({
@@ -128,16 +127,16 @@ def servidor():
         if user_rep_socket.poll(1000):  # Tiempo de espera para solicitudes de usuario
             solicitud = user_rep_socket.recv_string()
             print(f"Solicitud recibida: {solicitud}")
-            solicitudes.append(solicitud)  # Añadir la solicitud a la lista
+            solicitudes.append(solicitud) 
 
             # Registrar el tiempo en que expira el timeout para esta solicitud
             user_id = solicitud.split()[1]
-            solicitudes_timeout[user_id] = time.time() + 15  # Timeout de 15 segundos para cada solicitud
+            solicitudes_timeout[user_id] = time.time() + 15  # Timeout de 15 segundos para cada solicitud, establecido
 
             # Verificar si hay taxis disponibles
             if len(taxis) > 0:
                 if user_is_still_waiting(solicitud, solicitudes_timeout):
-                    # Seleccionar cualquier taxi disponible
+                    # La selección se maneja al azar de momento
                     taxi_seleccionado = seleccionar_taxi(taxis)
                     print(f"Asignando servicio al taxi {taxi_seleccionado}")
 
@@ -157,10 +156,10 @@ def servidor():
                     usuario_posicion = solicitud.split(maxsplit=2)[2:]  # Obtener la posición del usuario de la solicitud
                     registrar_servicio(data, taxi_seleccionado, usuario_posicion, taxi_posicion, servicio_satisfactorio=True)
                     guardar_datos_archivo(json_file, data)
-
-                    # Enviar la confirmación al usuario
                     user_rep_socket.send_string(f"Taxi {taxi_seleccionado} asignado")
+
                 else:
+                    # Eliminar la solicitud después del timeout
                     print(f"Usuario ya no está esperando, eliminando la solicitud.")
                     solicitudes.remove(solicitud)
                     taxi_posicion = taxis.get(taxi_seleccionado, {"x": None, "y": None})
@@ -172,12 +171,12 @@ def servidor():
                 print("No hay taxis disponibles")
                 user_rep_socket.send_string("No hay taxis disponibles, intente más tarde")
 
-        # Manejar el health-check (ping/pong)
-        if ping_rep_socket.poll(1000):  # Verifica si se recibe un ping
+        # Manejar el health-check (mediante verificación constante con ping-pong)
+        if ping_rep_socket.poll(1000):  
             ping_message = ping_rep_socket.recv_string()
             if ping_message == "ping":
                 print("Recibido ping, respondiendo con pong")
-                ping_rep_socket.send_string("pong")
+                ping_rep_socket.send_string("pong") # Enviando pong, confirmando estado activo
 
         time.sleep(1)
 

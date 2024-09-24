@@ -1,0 +1,175 @@
+{
+    "taxis": [
+        {
+            "id": 1,
+            "posiciones": [
+                {
+                    "hora": "2024-09-24T19:36:57Z",
+                    "x": 9,
+                    "y": 7
+                },
+                {
+                    "hora": "2024-09-24T19:36:59Z",
+                    "x": 9,
+                    "y": 7
+                },
+                {
+                    "hora": "2024-09-24T19:37:01Z",
+                    "x": 9,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:37:04Z",
+                    "x": 9,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:37:07Z",
+                    "x": 9,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:37:10Z",
+                    "x": 9,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:37:13Z",
+                    "x": 9,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:37:16Z",
+                    "x": 9,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:37:19Z",
+                    "x": 9,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:37:22Z",
+                    "x": 9,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:37:25Z",
+                    "x": 9,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:37:28Z",
+                    "x": 9,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:37:31Z",
+                    "x": 9,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:37:33Z",
+                    "x": 9,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:37:35Z",
+                    "x": 9,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:38:03Z",
+                    "x": 0,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:38:06Z",
+                    "x": 0,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:38:09Z",
+                    "x": 0,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:38:12Z",
+                    "x": 2,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:38:15Z",
+                    "x": 4,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:38:18Z",
+                    "x": 6,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:38:21Z",
+                    "x": 6,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-09-24T19:38:24Z",
+                    "x": 8,
+                    "y": 9
+                }
+            ],
+            "servicios_realizados": 0
+        }
+    ],
+    "servicios": [
+        {
+            "hora_asignacion": "2024-09-24T19:37:31Z",
+            "taxi_id": 1,
+            "usuario_posicion": [
+                "en posici\u00f3n (9,8) solicita un taxi"
+            ],
+            "taxi_posicion": {
+                "x": 9,
+                "y": 9
+            }
+        },
+        {
+            "hora_asignacion": "2024-09-24T19:37:33Z",
+            "taxi_id": 1,
+            "usuario_posicion": [
+                "en posici\u00f3n (6,2) solicita un taxi"
+            ],
+            "taxi_posicion": {
+                "x": 9,
+                "y": 9
+            }
+        },
+        {
+            "hora_asignacion": "2024-09-24T19:37:35Z",
+            "taxi_id": 1,
+            "usuario_posicion": [
+                "en posici\u00f3n (2,2) solicita un taxi"
+            ],
+            "taxi_posicion": {
+                "x": 9,
+                "y": 9
+            }
+        },
+        {
+            "hora_asignacion": "2024-09-24T19:38:24Z",
+            "taxi_id": 1,
+            "usuario_posicion": [
+                "en posici\u00f3n (1,0) solicita un taxi"
+            ],
+            "taxi_posicion": {
+                "x": 8,
+                "y": 9
+            }
+        }
+    ],
+    "estadisticas": {
+        "servicios_satisfactorios": 4,
+        "servicios_negados": 0
+    }
+}

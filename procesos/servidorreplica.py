@@ -3,11 +3,11 @@ import threading
 import time
 import random
 
-# Almacenar el estado recibido desde el servidor principal
+# Almacenar el estado recibido desde el servidor principal, diferenciando solicitudes y taxis activos
 estado_recibido = {
     'taxis': {},
     'solicitudes': [],
-    'solicitudes_resueltas': [],  # Diccionario para solicitudes ya resueltas
+    'solicitudes_resueltas': [],
     'taxis_activos': {}
 }
 
@@ -46,9 +46,9 @@ def servidor_replica():
         solicitudes_resueltas = estado_recibido['solicitudes_resueltas']
         taxis_activos = estado_recibido['taxis_activos']
 
-        # Procesar solicitudes existentes
+        # Procesar sólo solicitudes existentes, no ya resueltas
         for solicitud in solicitudes[:]:
-            if solicitud not in solicitudes_resueltas:  # Solo procesar si no está resuelta
+            if solicitud not in solicitudes_resueltas: 
                 id_usuario = solicitud.split()[1]
 
                 if user_is_still_waiting(id_usuario):
@@ -57,15 +57,15 @@ def servidor_replica():
                         taxi_seleccionado = seleccionar_taxi(taxis_disponibles)
                         print(f"Asignando servicio al taxi {taxi_seleccionado} para el usuario {id_usuario}")
                         asignar_servicio_taxi(taxi_seleccionado, id_usuario)
-                        solicitudes_resueltas.append(solicitud)  # Marcar como resuelta
+                        solicitudes_resueltas.append(solicitud)  
                     else:
                         print(f"No hay taxis activos disponibles. Reagendando solicitud.")
                 else:
                     print(f"Usuario {id_usuario} ya no está esperando, eliminando la solicitud.")
                     solicitudes.remove(solicitud)
 
-        # Recibir nuevas posiciones de taxis
-        if sub_socket.poll(1000):
+        
+        if sub_socket.poll(1000): # Recibir nuevas posiciones de taxis
             mensaje = sub_socket.recv_string()
             print(f"Recibido mensaje: {mensaje}")
             partes = mensaje.split()
@@ -73,9 +73,8 @@ def servidor_replica():
             posicion = partes[-1]
             taxis[id_taxi] = posicion
             taxis_activos[id_taxi] = True
-
-        # Recibir nuevas solicitudes de usuarios
-        if user_rep_socket.poll(1000):
+        
+        if user_rep_socket.poll(1000):# Recibir nuevas solicitudes de usuarios
             solicitud = user_rep_socket.recv_string()
             print(f"Solicitud recibida en réplica: {solicitud}")
             solicitudes.append(solicitud)
