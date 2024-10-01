@@ -43,6 +43,7 @@ def registrar_servicio(data, taxi_id, usuario_posicion, taxi_posicion, servicio_
 
 
 def listen_for_activation():
+    
     """Escucha señales de activación remota mediante un ping."""
     context = zmq.Context()
     activation_socket = context.socket(zmq.REP)

@@ -48,7 +48,7 @@ def ping_replica_to_activate(replica_ip):
     """Envía un ping de activación a la réplica."""
     context = zmq.Context()
     activate_socket = context.socket(zmq.REQ)
-    replica_ping_port = "5577"  # Puerto específico para ping de activación
+    replica_ping_port = "5561"  # Puerto específico para ping de activación
 
     # Conectar al socket de activación de la réplica
     activate_socket.connect(f"tcp://{replica_ip}:{replica_ping_port}")
