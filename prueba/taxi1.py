@@ -3,12 +3,14 @@ import time
 import random
 import json  
 
+ip_central='10.43.100.106'
+
 def mover_taxi(id_taxi, grid_size, velocidad, max_servicios):
     context = zmq.Context()
 
     # Publisher para enviar posiciones
     pub_socket = context.socket(zmq.PUB)
-    pub_socket.connect(f"tcp://localhost:5555")  # El servidor va a bindear a este puerto
+    pub_socket.connect(f"tcp://{ip_central}:5555")  # El servidor va a bindear a este puerto
 
     # REP para recibir servicios
     rep_socket = context.socket(zmq.REP)

@@ -5,6 +5,7 @@ import threading
 
 # Diccionario para almacenar el estado de los usuarios (si siguen activos o no)
 usuarios_activos = {}
+ip_central='10.43.100.106'
 
 # Función para manejar la solicitud de taxi
 def solicitar_taxi(req_socket, id_usuario, x, y):
@@ -40,7 +41,7 @@ def usuario(id_usuario, x, y, tiempo_espera):
     context = zmq.Context()
 
     # Intentar primero con el servidor central, luego la réplica
-    servidores = [("tcp://localhost:5556", "Servidor Central"), ("tcp://localhost:5557", "Servidor Réplica")]
+    servidores = [(f"tcp://{ip_central}:5556", "Servidor Central"), (f"tcp://{ip_central}:5557", "Servidor Réplica")]
     
     # Simular tiempo hasta necesitar un taxi
     print(f"Usuario {id_usuario} en posición ({x},{y}) esperando {tiempo_espera} segundos para solicitar un taxi.")
