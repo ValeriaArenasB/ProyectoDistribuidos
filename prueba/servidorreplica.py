@@ -82,6 +82,7 @@ def servidor(is_primary=False):
     solicitudes = []
     taxis_activos = {}  # Diccionario para gestionar el estado de taxis (si están activos)
     solicitudes_timeout = {}  # Diccionario para registrar el timeout de cada solicitud
+    taxi_ip = '10.43.101.211'
 
     # Cargar datos del archivo JSON
     json_file = 'datos_taxis.json'
@@ -143,7 +144,6 @@ def servidor(is_primary=False):
                     taxi_seleccionado = seleccionar_taxi(taxis)
                     print(f"Asignando servicio al taxi {taxi_seleccionado}")
 
-                    # Conectar al taxi seleccionado
                     taxi_req_socket.connect(f"tcp://localhost:556{taxi_seleccionado}")
                     taxi_req_socket.send_string("Servicio asignado")
                     respuesta = taxi_req_socket.recv_string()

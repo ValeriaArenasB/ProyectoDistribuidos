@@ -83,6 +83,7 @@ def servidor(is_primary=True):
     solicitudes = []
     taxis_activos = {}  # Diccionario para gestionar el estado de taxis (si están activos)
     solicitudes_timeout = {}  # Diccionario para registrar el timeout de cada solicitud
+    taxi_ip = '10.43.101.211'
 
     # Cargar datos del archivo JSON
     json_file = 'datos_taxis.json'
@@ -146,11 +147,12 @@ def servidor(is_primary=True):
                     print(f"Asignando servicio al taxi {taxi_seleccionado}")
 
                     # Conectar al taxi seleccionado
-                    taxi_req_socket.connect(f"tcp://localhost:556{taxi_seleccionado}")
+                    taxi_req_socket.connect(f"tcp://{taxi_ip}:556{taxi_seleccionado}")
+        
                     taxi_req_socket.send_string("Servicio asignado")
                     respuesta = taxi_req_socket.recv_string()
                     print(f"Respuesta del taxi {taxi_seleccionado}: {respuesta}")
-                    taxi_req_socket.disconnect(f"tcp://localhost:556{taxi_seleccionado}")  # Desconectar después del uso
+                    taxi_req_socket.disconnect(f"tcp://{taxi_ip}:556{taxi_seleccionado}")  # Desconectar después del uso
 
                     # Eliminar la solicitud después de asignarla
                     solicitudes.remove(solicitud)

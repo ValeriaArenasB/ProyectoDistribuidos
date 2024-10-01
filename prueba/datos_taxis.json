@@ -297,6 +297,71 @@
                     "hora": "2024-10-01T02:28:31Z",
                     "x": 3,
                     "y": 9
+                },
+                {
+                    "hora": "2024-10-01T14:35:14Z",
+                    "x": 2,
+                    "y": 4
+                },
+                {
+                    "hora": "2024-10-01T14:35:17Z",
+                    "x": 4,
+                    "y": 4
+                },
+                {
+                    "hora": "2024-10-01T14:35:20Z",
+                    "x": 4,
+                    "y": 6
+                },
+                {
+                    "hora": "2024-10-01T14:35:23Z",
+                    "x": 6,
+                    "y": 6
+                },
+                {
+                    "hora": "2024-10-01T14:35:26Z",
+                    "x": 8,
+                    "y": 6
+                },
+                {
+                    "hora": "2024-10-01T14:35:29Z",
+                    "x": 8,
+                    "y": 8
+                },
+                {
+                    "hora": "2024-10-01T14:35:32Z",
+                    "x": 9,
+                    "y": 8
+                },
+                {
+                    "hora": "2024-10-01T14:35:36Z",
+                    "x": 9,
+                    "y": 8
+                },
+                {
+                    "hora": "2024-10-01T14:35:39Z",
+                    "x": 9,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-10-01T14:35:42Z",
+                    "x": 9,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-10-01T14:35:44Z",
+                    "x": 9,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-10-01T14:35:46Z",
+                    "x": 9,
+                    "y": 9
+                },
+                {
+                    "hora": "2024-10-01T14:35:48Z",
+                    "x": 9,
+                    "y": 9
                 }
             ],
             "servicios_realizados": 0
@@ -412,10 +477,43 @@
                 "x": 9,
                 "y": 9
             }
+        },
+        {
+            "hora_asignacion": "2024-10-01T14:35:42Z",
+            "taxi_id": 1,
+            "usuario_posicion": [
+                "en posici\u00f3n (8,8) solicita un taxi"
+            ],
+            "taxi_posicion": {
+                "x": 9,
+                "y": 9
+            }
+        },
+        {
+            "hora_asignacion": "2024-10-01T14:35:44Z",
+            "taxi_id": 1,
+            "usuario_posicion": [
+                "en posici\u00f3n (1,8) solicita un taxi"
+            ],
+            "taxi_posicion": {
+                "x": 9,
+                "y": 9
+            }
+        },
+        {
+            "hora_asignacion": "2024-10-01T14:35:46Z",
+            "taxi_id": 1,
+            "usuario_posicion": [
+                "en posici\u00f3n (0,0) solicita un taxi"
+            ],
+            "taxi_posicion": {
+                "x": 9,
+                "y": 9
+            }
         }
     ],
     "estadisticas": {
-        "servicios_satisfactorios": 10,
+        "servicios_satisfactorios": 13,
         "servicios_negados": 0
     }
 }
