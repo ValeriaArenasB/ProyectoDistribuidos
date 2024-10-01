@@ -39,6 +39,32 @@ def registrar_servicio(data, taxi_id, usuario_posicion, taxi_posicion, servicio_
     else:
         data["estadisticas"]["servicios_negados"] += 1
 
+
+
+
+def listen_for_activation():
+    """Escucha señales de activación remota mediante un ping."""
+    context = zmq.Context()
+    activation_socket = context.socket(zmq.REP)
+    activation_socket.bind("tcp://*:5561")  # Puerto para recibir el ping de activación
+
+    while True:
+        mensaje = activation_socket.recv_string()
+        if mensaje == "ping":
+            print("Recibido ping de activación, tomando control...")
+            # Enviar respuesta de confirmación
+            activation_socket.send_string("OK_ACTIVATED")
+            # Activar la réplica como servidor principal
+            activar_replica()
+
+def activar_replica():
+    # Implementa la lógica para activar la réplica (cambiar puertos, etc.)
+    print("Activando réplica ahora...")
+    # Cerrar y reabrir sockets para tomar el control como servidor principal
+    servidor(is_primary=True)
+
+
+
 def servidor(is_primary=False):
     context = zmq.Context()
 
@@ -137,18 +163,20 @@ def servidor(is_primary=False):
             user_id = solicitud.split()[1]
             solicitudes_timeout[user_id] = time.time() + 15  # Timeout de 15 segundos para cada solicitud, establecido
 
-            # Verificar si hay taxis disponibles
+            # Verificar si hay health_checktaxis disponibles
             if len(taxis) > 0:
                 if user_is_still_waiting(solicitud, solicitudes_timeout):
                     # La selección se maneja al azar de momento
                     taxi_seleccionado = seleccionar_taxi(taxis)
                     print(f"Asignando servicio al taxi {taxi_seleccionado}")
 
-                    taxi_req_socket.connect(f"tcp://localhost:556{taxi_seleccionado}")
+                      # Conectar al taxi seleccionado
+                    taxi_req_socket.connect(f"tcp://{taxi_ip}:556{taxi_seleccionado}")
+        
                     taxi_req_socket.send_string("Servicio asignado")
                     respuesta = taxi_req_socket.recv_string()
                     print(f"Respuesta del taxi {taxi_seleccionado}: {respuesta}")
-                    taxi_req_socket.disconnect(f"tcp://localhost:556{taxi_seleccionado}")  # Desconectar después del uso
+                    taxi_req_socket.disconnect(f"tcp://{taxi_ip}:556{taxi_seleccionado}")  # Desconectar después del uso
 
                     # Eliminar la solicitud después de asignarla
                     solicitudes.remove(solicitud)
@@ -193,4 +221,18 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
 servidor(is_primary=False)
+
+if __name__ == "__main__":
+    # Socket para recibir el estado desde el servidor principal
+    context = zmq.Context()
+    replica_socket = context.socket(zmq.PULL)
+    replica_socket.bind("tcp://*:5559")  # Puerto en el que la réplica recibe el estado
+
+    # Lanzar el proceso para recibir el estado
+    threading.Thread(target=recibir_estado, args=(replica_socket,)).start()
+
+    # Lanzar la escucha de activación en un hilo separado
+    threading.Thread(target=listen_for_activation).start()
+
+    print("Réplica lista para activación remota.")
 
