@@ -1,7 +1,7 @@
 import zmq
 import time
 
-def health_check(replica_ip="192.168.1.2", primary_socket_addr="tcp://localhost:5558"):
+def health_check(replica_ip="10.43.101.211", primary_socket_addr="tcp://localhost:5558"):
     context = zmq.Context()
 
     def create_socket():
@@ -55,10 +55,10 @@ def ping_replica_to_activate(replica_ip):
     
     # Enviar el ping de activación
     print("Enviando ping a la réplica para activación...")
-    activate_socket.send_string("ACTIVATE")
+    activate_socket.send_string("ping")
     response = activate_socket.recv_string()
     print(f"Respuesta de la réplica: {response}")
     activate_socket.close()
 
 if __name__ == "__main__":
-    health_check(replica_ip="192.168.1.2")
+    health_check(replica_ip="10.43.101.211")
