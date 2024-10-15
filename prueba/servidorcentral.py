@@ -56,17 +56,16 @@ def servidor(is_primary=True):
 
     # Configurar los puertos según si es primario o réplica
     if is_primary:
-        sub_port = 5555
-        user_rep_port = 5556
+        user_rep_port = 5551
     else:
-        # Usar puertos "standby" para evitar conflicto con el primario
-        sub_port = 5551
         user_rep_port = 5552
 
-    # SUB para recibir posiciones de taxis
+    # **Nuevo SUB conectado al Broker**
     sub_socket = context.socket(zmq.SUB)
-    sub_socket.bind(f"tcp://*:{sub_port}")
-    sub_socket.setsockopt_string(zmq.SUBSCRIBE, "")
+    sub_socket.connect("tcp://localhost:5556")  # Conectar al Broker
+
+    # **Suscripción a ubicaciones de taxis**
+    sub_socket.setsockopt_string(zmq.SUBSCRIBE, "ubicacion_taxi")
 
     # REP para recibir solicitudes de usuarios
     user_rep_socket = context.socket(zmq.REP)
@@ -75,9 +74,10 @@ def servidor(is_primary=True):
     # REQ para enviar servicios a los taxis
     taxi_req_socket = context.socket(zmq.REQ)
 
-    # REP para el ping/pong health-check
+    # REP para el health-check
     ping_rep_socket = context.socket(zmq.REP)
     ping_rep_socket.bind(f"tcp://*:5558")
+
 
     taxis = {}
     solicitudes = []
@@ -101,6 +101,7 @@ def servidor(is_primary=True):
                 id_taxi = int(partes[1])
                 posicion = partes[2]
                 try:
+            
                     taxi_posicion = json.loads(posicion)  # Convertir la cadena JSON a diccionario
                     taxis[id_taxi] = taxi_posicion
                     taxis_activos[id_taxi] = True 

@@ -3,19 +3,19 @@ import time
 import random
 import json  
 
-ip_central='10.43.100.106'
+# IP del Broker en lugar del servidor central
+ip_broker = 'localhost'
 
 def mover_taxi(id_taxi, grid_size, velocidad, max_servicios):
     context = zmq.Context()
 
-    # Publisher para enviar posiciones
+    # Publisher para enviar posiciones AL BROKER
     pub_socket = context.socket(zmq.PUB)
-    pub_socket.connect(f"tcp://{ip_central}:5555")  # El servidor va a bindear a este puerto
+    pub_socket.connect(f"tcp://{ip_broker}:5555")  # Conectarse al Broker
 
-    # REP para recibir servicios
+    # Socket REP para recibir servicios (sin cambios)
     rep_socket = context.socket(zmq.REP)
     rep_socket.bind(f"tcp://*:556{id_taxi}")  # Cada taxi tiene su propio puerto
-    time.sleep(1)  # Asegurar que el socket esté listo con un pequeño sleep
 
     x, y = random.randint(0, grid_size[0] - 1), random.randint(0, grid_size[1] - 1)
     servicios_realizados = 0
@@ -24,8 +24,9 @@ def mover_taxi(id_taxi, grid_size, velocidad, max_servicios):
         # Enviar la posición actual en formato JSON
         taxi_posicion = {"x": x, "y": y}
         mensaje = json.dumps(taxi_posicion)
-        pub_socket.send_string(f"Taxi {id_taxi} {mensaje}")
+        pub_socket.send_string(f"ubicacion_taxi {id_taxi} {mensaje}")
         print(f"Enviado: Taxi {id_taxi} {mensaje}")
+        
 
         poller = zmq.Poller()
         poller.register(rep_socket, zmq.POLLIN)
