@@ -3,7 +3,7 @@ import time
 import random
 import json  
 
-# IP del Broker en lugar del servidor central
+# IP del broker en lugar del servidor central
 ip_broker = 'localhost'
 
 def mover_taxi(id_taxi, grid_size, velocidad, max_servicios):
@@ -14,6 +14,9 @@ def mover_taxi(id_taxi, grid_size, velocidad, max_servicios):
             # Publisher para enviar información al Broker
             pub_socket = context.socket(zmq.PUB)
             pub_socket.connect(f"tcp://{ip_broker}:5555")  # Conectar al Broker
+
+            pub_socket2 = context.socket(zmq.PUB)
+            pub_socket2.connect(f"tcp://{ip_broker}:5755")  # Conectar al Broker 2 (tolerancia a fallos)
 
             # Socket REP para recibir servicios
             rep_socket = context.socket(zmq.REP)
@@ -27,12 +30,16 @@ def mover_taxi(id_taxi, grid_size, velocidad, max_servicios):
                 taxi_posicion = {"x": x, "y": y}
                 mensaje = json.dumps(taxi_posicion)
                 pub_socket.send_string(f"ubicacion_taxi {id_taxi} {mensaje}")
+                pub_socket2.send_string(f"ubicacion_taxi {id_taxi} {mensaje}")
+
                 print(f"Enviado a ubicacion_taxi: {id_taxi} {mensaje}")
                 
                 # Enviar el estado del taxi en el tópico `estado_taxi`
                 estado_taxi = {"estado": "disponible"}
                 mensaje_estado = json.dumps(estado_taxi)
                 pub_socket.send_string(f"estado_taxi {id_taxi} {mensaje_estado}")
+                pub_socket2.send_string(f"estado_taxi {id_taxi} {mensaje_estado}")
+
                 print(f"Enviado a estado_taxi: {id_taxi} {mensaje_estado}")
 
                 # Poll para recibir servicios
@@ -54,6 +61,8 @@ def mover_taxi(id_taxi, grid_size, velocidad, max_servicios):
                 
         finally:
             pub_socket.close()
+            pub_socket2.close()
+
             rep_socket.close()
             context.term()
 
