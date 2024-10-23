@@ -5,7 +5,9 @@ import threading
 
 # Diccionario para almacenar el estado de los usuarios (si siguen activos o no)
 usuarios_activos = {}
-ip_central='10.43.100.106'
+#ip_central='10.43.100.106'
+ip_central='localhost'
+
 
 # Función para manejar la solicitud de taxi
 def solicitar_taxi(req_socket, id_usuario, x, y):
@@ -37,33 +39,31 @@ def solicitar_taxi(req_socket, id_usuario, x, y):
     return True  # Indicar que se recibió respuesta correctamente
 
 
+# Función usuario actualizada en usuarios.py
 def usuario(id_usuario, x, y, tiempo_espera):
     context = zmq.Context()
 
-    # Intentar primero con el servidor central, luego la réplica
-    servidores = [(f"tcp://{ip_central}:5556", "Servidor Central"), (f"tcp://{ip_central}:5557", "Servidor Réplica")]
+    # Los usuarios deben conectarse al puerto REQ/REP del servidor, no al Broker
+    servidores = [(f"tcp://{ip_central}:5551", "Servidor Central"), (f"tcp://{ip_central}:5552", "Servidor Réplica")]
     
     # Simular tiempo hasta necesitar un taxi
     print(f"Usuario {id_usuario} en posición ({x},{y}) esperando {tiempo_espera} segundos para solicitar un taxi.")
     time.sleep(tiempo_espera)
 
-    # Marcamos al usuario como activo (esperando por un taxi)
     usuarios_activos[id_usuario] = True
 
-    # Probar con ambos servidores (central y réplica)
     for direccion_servidor, nombre_servidor in servidores:
         req_socket = context.socket(zmq.REQ)
-        req_socket.connect(direccion_servidor)  # Conectar al servidor
+        req_socket.connect(direccion_servidor)  # Conectar al puerto correcto del servidor
 
         print(f"Usuario {id_usuario} intentando conectarse a {nombre_servidor} ({direccion_servidor})...")
         
         if solicitar_taxi(req_socket, id_usuario, x, y):
-            # Si la solicitud fue exitosa, cerrar socket y salir
             req_socket.close()
             return
         else:
             print(f"Fallo en {nombre_servidor}, intentando con otro servidor...")
-            req_socket.close()  # Cerrar socket después de fallo
+            req_socket.close()
 
     print(f"Usuario {id_usuario} no pudo conectarse a ningún servidor.")
 

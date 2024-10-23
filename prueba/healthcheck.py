@@ -5,7 +5,7 @@ def health_check(replica_ip="10.43.101.211", primary_socket_addr="tcp://localhos
     context = zmq.Context()
 
     def create_socket():
-        """Crea un socket REQ con el timeout apropiado."""
+        #Crea un socket REQ con el timeout apropiado.
         sock = context.socket(zmq.REQ)
         sock.connect(primary_socket_addr)
         sock.setsockopt(zmq.RCVTIMEO, 5000)  # 5 segundos de espera
@@ -25,7 +25,7 @@ def health_check(replica_ip="10.43.101.211", primary_socket_addr="tcp://localhos
                 if respuesta == "pong":
                     print("Servidor principal en funcionamiento")
                     success = True
-                    break  # Salir del bucle de reintentos si hay éxito
+                    break  
             except zmq.error.Again:
                 print(f"Intento {attempt + 1} fallido. Reintentando...")
                 # Si es el último intento fallido, activa la réplica
@@ -37,7 +37,7 @@ def health_check(replica_ip="10.43.101.211", primary_socket_addr="tcp://localhos
             finally:
                 health_socket.close()
 
-            time.sleep(1)  # Esperar antes del siguiente intento
+            time.sleep(1)  
 
         if success:
             time.sleep(1)
