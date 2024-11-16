@@ -1045,10 +1045,82 @@
                 "x": 9,
                 "y": 9
             }
+        },
+        {
+            "hora_asignacion": "2024-11-16T18:26:43Z",
+            "taxi_id": 2,
+            "usuario_posicion": {
+                "x": 8,
+                "y": 7
+            },
+            "taxi_posicion": {
+                "x": 7,
+                "y": 4
+            }
+        },
+        {
+            "hora_asignacion": "2024-11-16T18:26:45Z",
+            "taxi_id": 2,
+            "usuario_posicion": {
+                "x": 1,
+                "y": 7
+            },
+            "taxi_posicion": {
+                "x": 7,
+                "y": 3
+            }
+        },
+        {
+            "hora_asignacion": "2024-11-16T18:26:46Z",
+            "taxi_id": 2,
+            "usuario_posicion": {
+                "x": 5,
+                "y": 4
+            },
+            "taxi_posicion": {
+                "x": 7,
+                "y": 2
+            }
+        },
+        {
+            "hora_asignacion": "2024-11-16T20:28:23Z",
+            "taxi_id": 1,
+            "usuario_posicion": {
+                "x": 2,
+                "y": 1
+            },
+            "taxi_posicion": {
+                "x": 7,
+                "y": 8
+            }
+        },
+        {
+            "hora_asignacion": "2024-11-16T20:28:24Z",
+            "taxi_id": 1,
+            "usuario_posicion": {
+                "x": 4,
+                "y": 4
+            },
+            "taxi_posicion": {
+                "x": 6,
+                "y": 8
+            }
+        },
+        {
+            "hora_asignacion": "2024-11-16T20:28:27Z",
+            "taxi_id": 1,
+            "usuario_posicion": {
+                "x": 6,
+                "y": 3
+            },
+            "taxi_posicion": {
+                "x": 8,
+                "y": 9
+            }
         }
     ],
     "estadisticas": {
-        "servicios_satisfactorios": 13,
+        "servicios_satisfactorios": 19,
         "servicios_negados": 0
     }
 }
